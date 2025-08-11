@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expensr Tracker</title>
+  <!-- Tailwind CSS CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4 antialiased">
+  
+  <!-- Main Container -->
+  <div class="w-full max-w-md">
+    
+    <!-- Loading Screen (visible by default) -->
+    <div id="loading-container" class="bg-white rounded-2xl shadow-xl p-8 text-center">
+      <h1 class="text-3xl font-bold mb-4 text-indigo-600 animate-pulse">
+        Loading Expensr...
+      </h1>
+      <div class="flex justify-center items-center">
+        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Main App Container (initially hidden) -->
+    <div id="app-container" class="bg-white rounded-2xl shadow-xl p-8 hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold text-indigo-600">
+          Expensr Tracker
+        </h1>
+        <button id="logout-btn"
+          class="bg-red-500 text-white font-bold py-1 px-3 rounded-lg shadow-md hover:bg-red-600 transition-all focus:outline-none focus:ring-2 focus:ring-red-400">
+          Logout
+        </button>
+      </div>
+      
+      <p id="user-info" class="text-sm text-gray-500 mb-4 text-center"></p>
+
+      <div class="flex justify-center mb-6 space-x-4">
+        <button id="family-btn"
+          class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          Family Portfolio
+        </button>
+        <button id="separate-btn"
+          class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md hover:bg-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          Separate Portfolio
+        </button>
+      </div>
+
+      <!-- Budget Limit and Notification -->
+      <div class="text-center mb-6">
+        <div class="flex items-center justify-center mb-4">
+          <h4 class="text-lg text-gray-500 font-semibold uppercase tracking-wider mr-2">
+            Monthly Budget:
+          </h4>
+          <input type="number" id="budget-input" placeholder="Set budget..."
+            class="w-32 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            step="0.01" min="0" />
+        </div>
+        <div id="budget-notification"
+          class="hidden p-3 rounded-lg text-white font-semibold shadow-md transition-all duration-300 transform">
+        </div>
+      </div>
+
+      <!-- Balance, Income, and Expense section -->
+      <div class="text-center mb-6">
+        <h4 class="text-lg text-gray-500 font-semibold uppercase tracking-wider">
+          Your Balance
+        </h4>
+        <p id="balance" class="text-4xl font-bold text-gray-800">₹0.00</p>
+      </div>
+
+      <!-- Income and Expense container -->
+      <div class="bg-gray-50 rounded-xl p-6 flex justify-around items-center mb-6 shadow-inner">
+        <div>
+          <h4 class="text-lg font-semibold text-center mb-1 text-green-600">
+            Income
+          </h4>
+          <p id="income" class="text-2xl font-bold text-center">₹0.00</p>
+        </div>
+        <div class="w-px h-16 bg-gray-300 mx-4"></div> <!-- Divider -->
+        <div>
+          <h4 class="text-lg font-semibold text-center mb-1 text-red-600">
+            Expense
+          </h4>
+          <p id="expense" class="text-2xl font-bold text-center">₹0.00</p>
+        </div>
+      </div>
+
+      <!-- Transaction History section -->
+      <div class="mb-6">
+        <h3 class="text-xl font-bold border-b-2 border-indigo-200 pb-2 mb-4">
+          History
+        </h3>
+        <ul id="list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <!-- Transactions will be dynamically added here -->
+        </ul>
+        <p id="no-transactions-message" class="text-center text-gray-500 italic mt-4 hidden">
+          No transactions yet.
+        </p>
+      </div>
+
+      <!-- New Transaction Form -->
+      <div class="mb-6">
+        <h3 class="text-xl font-bold border-b-2 border-indigo-200 pb-2 mb-4">
+          Add new transaction
+        </h3>
+        <div id="error-message" class="text-red-500 text-sm mb-4 hidden"></div>
+        <form id="form" class="space-y-4">
+          <div class="flex flex-col">
+            <label for="text" class="text-sm font-semibold mb-1">
+              Description
+            </label>
+            <input type="text" id="text" placeholder="Enter description..."
+              class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+              required />
+          </div>
+          <div class="flex flex-col">
+            <label for="amount" class="text-sm font-semibold mb-1">
+              Amount
+            </label>
+            <input type="number" id="amount" placeholder="Enter amount..."
+              class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+              required step="0.01" min="0" />
+          </div>
+
+          <!-- Radio buttons for transaction type -->
+          <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+              <input type="radio" name="transactionType" value="expense" checked
+                class="form-radio text-red-600 h-5 w-5" />
+              <span class="ml-2 text-sm font-medium text-gray-700">Expense</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="transactionType" value="income"
+                class="form-radio text-green-600 h-5 w-5" />
+              <span class="ml-2 text-sm font-medium text-gray-700">Income</span>
+            </label>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            Add Transaction
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged, 
+      signInAnonymously, 
+      signOut,
+      signInWithCustomToken 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global variables from Canvas environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // Get all necessary DOM elements
+    const appContainer = document.getElementById('app-container');
+    const loadingContainer = document.getElementById('loading-container');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userInfo = document.getElementById('user-info');
+    
+    const balanceElement = document.getElementById('balance');
+    const incomeElement = document.getElementById('income');
+    const expenseElement = document.getElementById('expense');
+    const list = document.getElementById('list');
+    const form = document.getElementById('form');
+    const textInput = document.getElementById('text');
+    const amountInput = document.getElementById('amount');
+    const noTransactionsMessage = document.getElementById('no-transactions-message');
+    const errorMessage = document.getElementById('error-message');
+    const budgetInput = document.getElementById('budget-input');
+    const budgetNotification = document.getElementById('budget-notification');
+
+    const familyBtn = document.getElementById('family-btn');
+    const separateBtn = document.getElementById('separate-btn');
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Initial state for the application
+    let appState = {
+      currentPortfolio: 'family',
+      portfolios: {
+        family: { transactions: [], budget: 10000 },
+        separate: { transactions: [], budget: 0 }
+      }
+    };
+    let userDocRef = null;
+
+    // --- AUTHENTICATION & INITIALIZATION LOGIC ---
+
+    const showAppUI = (user) => {
+      loadingContainer.classList.add('hidden');
+      appContainer.classList.remove('hidden');
+      userInfo.innerText = `Logged in as: (User ID: ${user.uid})`;
+      
+      // Start listening for user data from Firestore
+      userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'portfolios', 'user_data');
+      onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          // Data exists, update the app state
+          const storedState = docSnap.data();
+          if (storedState) {
+            appState = JSON.parse(storedState.data);
+            updateValues();
+            renderTransactions();
+          }
+        } else {
+          // No data for this user, create an initial state
+          const initialData = JSON.stringify(appState);
+          setDoc(userDocRef, { data: initialData });
+        }
+      });
+    };
+
+    const handleAuthFlow = async () => {
+      try {
+        if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Authentication failed:", error);
+        loadingContainer.innerHTML = '<h1 class="text-3xl font-bold text-red-600">Error!</h1><p class="mt-4 text-gray-600">Could not connect. Please check your Firebase configuration.</p>';
+      }
+    };
+
+    // Listen for auth state changes to trigger UI update
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        showAppUI(user);
+      } else {
+        // If no user is logged in, attempt to sign in again.
+        // This handles cases where the user logs out or the session expires.
+        handleAuthFlow();
+      }
+    });
+
+    // Start the authentication process when the script loads
+    handleAuthFlow();
+
+    const handleLogout = async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    };
+    
+    // --- MAIN APP LOGIC (UPDATED FOR FIRESTORE) ---
+
+    // Save data to Firestore
+    const saveState = () => {
+      if (userDocRef) {
+        setDoc(userDocRef, { data: JSON.stringify(appState) });
+      }
+    };
+
+    // Function to calculate and update the balance, income, and expense for the current portfolio
+    const updateValues = () => {
+      const currentPortfolio = appState.portfolios[appState.currentPortfolio];
+      const amounts = currentPortfolio.transactions.map(transaction => transaction.amount);
+      const budget = currentPortfolio.budget;
+
+      const income = amounts
+        .filter(amount => amount > 0)
+        .reduce((acc, item) => (acc += item), 0)
+        .toFixed(2);
+
+      const expense = (amounts
+        .filter(amount => amount < 0)
+        .reduce((acc, item) => (acc += item), 0) * -1)
+        .toFixed(2);
+
+      const balance = (income - expense).toFixed(2);
+
+      balanceElement.innerText = `₹${balance}`;
+      incomeElement.innerText = `₹${income}`;
+      expenseElement.innerText = `₹${expense}`;
+      budgetInput.value = budget > 0 ? budget : '';
+
+      if (balance >= 0) {
+        balanceElement.classList.remove('text-red-600');
+        balanceElement.classList.add('text-green-600');
+      } else {
+        balanceElement.classList.remove('text-green-600');
+        balanceElement.classList.add('text-red-600');
+      }
+
+      if (budget > 0 && expense > budget) {
+        budgetNotification.classList.remove('hidden', 'bg-green-500');
+        budgetNotification.classList.add('bg-red-500');
+        budgetNotification.innerHTML = `⚠️ **Alert!** You have exceeded your monthly budget of ₹${parseFloat(budget).toFixed(2)}.`;
+      } else if (budget > 0) {
+        budgetNotification.classList.remove('hidden', 'bg-red-500');
+        budgetNotification.classList.add('bg-green-500');
+        budgetNotification.innerHTML = `Your monthly budget is ₹${parseFloat(budget).toFixed(2)}. You are doing great!`;
+      } else {
+        budgetNotification.classList.add('hidden');
+      }
+
+      if (currentPortfolio.transactions.length === 0) {
+        noTransactionsMessage.classList.remove('hidden');
+      } else {
+        noTransactionsMessage.classList.add('hidden');
+      }
+    };
+
+    const addTransactionToDOM = (transaction) => {
+      const sign = transaction.amount > 0 ? '+' : '-';
+      const item = document.createElement('li');
+
+      item.classList.add(
+        'relative', 'flex', 'justify-between', 'items-center', 'bg-white',
+        'rounded-xl', 'p-4', 'shadow', 'group', 'transition-transform',
+        'transform', 'hover:scale-[1.02]'
+      );
+
+      if (transaction.amount > 0) {
+        item.classList.add('border-r-4', 'border-green-500');
+      } else {
+        item.classList.add('border-r-4', 'border-red-500');
+      }
+
+      item.innerHTML = `
+        <span class="text-base font-medium">${transaction.text}</span>
+        <span class="text-lg font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}">
+          ${sign}₹${Math.abs(transaction.amount).toFixed(2)}
+        </span>
+        <button onclick="removeTransaction(${transaction.id})" class="absolute top-1/2 right-4 transform -translate-y-1/2 p-2 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-400">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.728-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 112 0v6a1 1 0 11-2 0V8z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      `;
+      list.appendChild(item);
+    };
+
+    const renderTransactions = () => {
+      list.innerHTML = '';
+      appState.portfolios[appState.currentPortfolio].transactions.forEach(addTransactionToDOM);
+    };
+
+    const addTransaction = (e) => {
+      e.preventDefault();
+
+      const transactionType = document.querySelector('input[name="transactionType"]:checked').value;
+      const amount = parseFloat(amountInput.value);
+
+      if (textInput.value.trim() === '' || isNaN(amount) || amount <= 0) {
+        errorMessage.innerText = 'Please enter a valid description and a positive amount.';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      errorMessage.classList.add('hidden');
+
+      const newTransaction = {
+        id: Math.floor(Math.random() * 100000000),
+        text: textInput.value,
+        amount: transactionType === 'expense' ? -amount : +amount
+      };
+
+      appState.portfolios[appState.currentPortfolio].transactions.push(newTransaction);
+      renderTransactions();
+      updateValues();
+      saveState();
+
+      textInput.value = '';
+      amountInput.value = '';
+    };
+
+    const removeTransaction = (id) => {
+      const currentPortfolio = appState.portfolios[appState.currentPortfolio];
+      currentPortfolio.transactions = currentPortfolio.transactions.filter(transaction => transaction.id !== id);
+      renderTransactions();
+      updateValues();
+      saveState();
+    };
+    
+    const switchPortfolio = (portfolioName) => {
+      appState.currentPortfolio = portfolioName;
+      if (portfolioName === 'family') {
+        familyBtn.classList.add('bg-indigo-600', 'text-white');
+        familyBtn.classList.remove('bg-gray-300', 'text-gray-800');
+        separateBtn.classList.remove('bg-indigo-600', 'text-white');
+        separateBtn.classList.add('bg-gray-300', 'text-gray-800');
+      } else {
+        separateBtn.classList.add('bg-indigo-600', 'text-white');
+        separateBtn.classList.remove('bg-gray-300', 'text-gray-800');
+        familyBtn.classList.remove('bg-indigo-600', 'text-white');
+        familyBtn.classList.add('bg-gray-300', 'text-gray-800');
+      }
+      renderTransactions();
+      updateValues();
+    };
+
+    // Event listeners
+    logoutBtn.addEventListener('click', handleLogout);
+    form.addEventListener('submit', addTransaction);
+    familyBtn.addEventListener('click', () => switchPortfolio('family'));
+    separateBtn.addEventListener('click', () => switchPortfolio('separate'));
+    budgetInput.addEventListener('input', (e) => {
+      const currentPortfolio = appState.portfolios[appState.currentPortfolio];
+      currentPortfolio.budget = parseFloat(e.target.value) || 0;
+      updateValues();
+      saveState();
+    });
+    
+    // Set up removeTransaction as a global function
+    window.removeTransaction = removeTransaction;
+  </script>
+</body>
+</html>
+
